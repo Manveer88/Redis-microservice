@@ -143,12 +143,12 @@ const activateSubscription = async (subscriptionId) => {
         const [plans] = await connection.execute(
             `SELECT id, validity_days
              FROM plans
-             WHERE id = ?`,
+             WHERE id = ? AND status = 'active'`,
             [subscription.plan_id]
         );
 
         if (!plans.length) {
-            throw new Error("PLAN_NOT_FOUND");
+            throw new Error("ACTIVE_PLAN_NOT_FOUND");
         }
 
         // Start after current expiry if the subscriber

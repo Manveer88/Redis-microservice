@@ -101,8 +101,69 @@ const createSubscription = async (req, res, next) => {
   }
 };
 
+// POST /api/subscriptions/:id/activate
+const activateSubscription = async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+
+    if (!Number.isSafeInteger(id) || id <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid subscription ID",
+      });
+    }
+
+    const subscription =
+      await subscriptionService.activateSubscription(id);
+
+    res.status(200).json({
+      success: true,
+      message: "Subscription activated successfully",
+      data: subscription,
+    });
+  } catch (error) {
+    if (error.message === "SUBSCRIPTION_NOT_FOUND") {
+      return res.status(404).json({
+        success: false,
+        message: "Subscription not found",
+      });
+    }
+
+    if (error.message === "SUBSCRIPTION_NOT_PENDING") {
+      return res.status(409).json({
+        success: false,
+        message: "Only pending subscriptions can be activated",
+      });
+    }
+
+    if (error.message === "SUBSCRIBER_NOT_FOUND") {
+      return res.status(404).json({
+        success: false,
+        message: "Subscriber not found",
+      });
+    }
+
+    if (error.message === "SUBSCRIBER_SUSPENDED") {
+      return res.status(409).json({
+        success: false,
+        message: "Cannot activate subscription for a suspended subscriber",
+      });
+    }
+
+    if (error.message === "ACTIVE_PLAN_NOT_FOUND") {
+      return res.status(409).json({
+        success: false,
+        message: "Plan is inactive or no longer exists",
+      });
+    }
+
+    next(error);
+  }
+};
+
 module.exports = {
   getAllSubscriptions,
   getSubscriptionById,
   createSubscription,
+  activateSubscription,
 };

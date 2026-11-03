@@ -31,4 +31,14 @@ router.post(
     subscriptionController.createSubscription
 );
 
+// ACTIVATE subscription after manual payment confirmation
+router.post(
+    "/:id/activate",
+    invalidateCache(
+        "cache:/api/subscriptions*",
+        "cache:/api/subscribers*"
+    ),
+    subscriptionController.activateSubscription
+);
+
 module.exports = router;
