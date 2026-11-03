@@ -1,0 +1,111 @@
+x-service: &service
+  env_file: .env
+  restart: unless-stopped
+  depends_on:
+    migrate:
+      condition: service_completed_successfully
+  environment: &service-env
+    NODE_ENV: production
+    DB_HOST: mysql
+    DB_PORT: "3306"
+    REDIS_URL: redis://redis:6379
+    AUTH_URL: http://auth-service:5101
+    SUBSCRIBER_URL: http://subscriber-service:5102
+    PLAN_URL: http://plan-service:5103
+    SUBSCRIPTION_URL: http://subscription-service:5104
+    BILLING_URL: http://billing-service:5105
+    USAGE_URL: http://usage-service:5106
+    NOTIFICATION_URL: http://notification-service:5107
+    REPORT_URL: http://report-service:5108
+    REALTIME_URL: http://realtime-service:5109
+
+services:
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME:-radius_management}
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-p${DB_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  redis:
+    image: redis:8
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  migrate:
+    build: { context: ., args: { SERVICE: auth-service } }
+    env_file: .env
+    environment:
+      <<: *service-env
+      DB_USER: root
+    working_dir: /app
+    command: ["sh", "-c", "node scripts/migrate.js && node scripts/seed-admin.js"]
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  gateway:
+    <<: *service
+    build: { context: ., args: { SERVICE: gateway } }
+    ports:
+      - "5001:5001"
+
+  auth-service:
+    <<: *service
+    build: { context: ., args: { SERVICE: auth-service } }
+
+  subscriber-service:
+    <<: *service
+    build: { context: ., args: { SERVICE: subscriber-service } }
+
+  plan-service:
+    <<: *service
+    build: { context: ., args: { SERVICE: plan-service } }
+
+  subscription-service:
+    <<: *service
+    build: { context: ., args: { SERVICE: subscription-service } }
+
+  billing-service:
+    <<: *service
+    build: { context: ., args: { SERVICE: billing-service } }
+
+  usage-service:
+    <<: *service
+    build: { context: ., args: { SERVICE: usage-service } }
+
+  notification-service:
+    <<: *service
+    build: { context: ., args: { SERVICE: notification-service } }
+
+  report-service:
+    <<: *service
+    build: { context: ., args: { SERVICE: report-service } }
+
+  realtime-service:
+    <<: *service
+    build: { context: ., args: { SERVICE: realtime-service } }
+    ports:
+      - "5109:5109"
+
+volumes:
+  mysql-data:
+  redis-data:

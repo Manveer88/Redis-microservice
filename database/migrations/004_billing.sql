@@ -1,0 +1,41 @@
+CREATE TABLE IF NOT EXISTS invoices (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  invoice_number VARCHAR(32) NULL,
+  subscriber_id BIGINT UNSIGNED NOT NULL,
+  subscription_id BIGINT UNSIGNED NOT NULL,
+  amount DECIMAL(10,2) NOT NULL,
+  amount_paid DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  status ENUM('unpaid','partial','paid','void') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'unpaid',
+  issued_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  due_date DATETIME NOT NULL,
+  paid_at DATETIME NULL,
+  voided_at DATETIME NULL,
+  void_reason VARCHAR(255) NULL,
+  created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_invoice_number (invoice_number),
+  UNIQUE KEY uq_invoice_subscription (subscription_id),
+  KEY idx_invoice_subscriber (subscriber_id),
+  KEY idx_invoice_status (status),
+  CONSTRAINT fk_invoice_subscriber FOREIGN KEY (subscriber_id) REFERENCES subscribers (id) ON DELETE RESTRICT,
+  CONSTRAINT fk_invoice_subscription FOREIGN KEY (subscription_id) REFERENCES subscriptions (id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS payments (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  invoice_id BIGINT UNSIGNED NOT NULL,
+  subscriber_id BIGINT UNSIGNED NOT NULL,
+  amount DECIMAL(10,2) NOT NULL,
+  method ENUM('cash','upi','bank_transfer','card','cheque','other') COLLATE utf8mb4_unicode_ci NOT NULL,
+  reference VARCHAR(100) NULL,
+  notes VARCHAR(255) NULL,
+  received_by BIGINT UNSIGNED NULL,
+  paid_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_payment_reference (method, reference),
+  KEY idx_payment_invoice (invoice_id),
+  KEY idx_payment_paid_at (paid_at),
+  CONSTRAINT fk_payment_invoice FOREIGN KEY (invoice_id) REFERENCES invoices (id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

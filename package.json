@@ -1,0 +1,22 @@
+{
+  "name": "isp-management",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "services/*",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "node scripts/dev.js --watch",
+    "start": "node scripts/dev.js",
+    "dev:frontend": "npm run dev -w frontend",
+    "migrate": "node scripts/migrate.js",
+    "seed:admin": "node scripts/seed-admin.js",
+    "smoke": "node scripts/smoke-test.js"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "dotenv": "^18.0.9",
+    "mysql2": "^3.24.6"
+  }
+}
