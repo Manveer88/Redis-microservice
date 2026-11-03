@@ -86,6 +86,17 @@ const updatePlanStatus = async (id, status) => {
   return getPlanById(id);
 };
 
+const isPlanInUse = async (id) => {
+  const [rows] = await pool.execute(
+    `SELECT
+      EXISTS(SELECT 1 FROM subscribers WHERE plan_id = ?) OR
+      EXISTS(SELECT 1 FROM subscriptions WHERE plan_id = ?) AS in_use`,
+    [id, id]
+  );
+
+  return Boolean(rows[0].in_use);
+};
+
 const deletePlan = async (id) => {
   const [result] = await pool.execute(
     "DELETE FROM plans WHERE id = ?",
@@ -101,5 +112,6 @@ module.exports = {
   createPlan,
   updatePlan,
   updatePlanStatus,
+  isPlanInUse,
   deletePlan,
 };

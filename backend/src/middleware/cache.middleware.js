@@ -56,4 +56,22 @@ const clearCache = async (pattern = "cache:*") => {
   }
 };
 
-module.exports = { cache, clearCache };
+const invalidateCache = (...patterns) => {
+  return (req, res, next) => {
+    const originalJson = res.json.bind(res);
+
+    res.json = async (data) => {
+      if (res.statusCode >= 200 && res.statusCode < 300) {
+        for (const pattern of patterns) {
+          await clearCache(pattern);
+        }
+      }
+
+      return originalJson(data);
+    };
+
+    next();
+  };
+};
+
+module.exports = { cache, clearCache, invalidateCache };

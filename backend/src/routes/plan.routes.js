@@ -6,19 +6,15 @@ const planController = require("../controllers/plan.controller");
 
 const {
   cache,
-  clearCache,
+  invalidateCache,
 } = require("../middleware/cache.middleware");
 
-// Clear plan cache after successful changes
-const invalidatePlanCache = (req, res, next) => {
-  res.on("finish", async () => {
-    if (res.statusCode >= 200 && res.statusCode < 300) {
-      await clearCache("cache:/api/plans*");
-    }
-  });
-
-  next();
-};
+// Clear plan cache and caches that include plan details
+const invalidatePlanCache = invalidateCache(
+  "cache:/api/plans*",
+  "cache:/api/subscribers*",
+  "cache:/api/subscriptions*"
+);
 
 // GET all plans
 router.get("/", cache(60), planController.getAllPlans);

@@ -215,6 +215,13 @@ const deletePlan = async (req, res, next) => {
       });
     }
 
+    if (await planService.isPlanInUse(id)) {
+      return res.status(409).json({
+        success: false,
+        message: "Plan is used by subscribers or subscriptions. Deactivate it instead.",
+      });
+    }
+
     const deleted = await planService.deletePlan(id);
 
     if (!deleted) {

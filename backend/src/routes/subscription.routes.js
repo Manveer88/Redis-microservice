@@ -3,18 +3,12 @@ const router = express.Router();
 
 const subscriptionController = require("../controllers/subscription.controller");
 
-const { cache, clearCache } = require("../middleware/cache.middleware");
+const { cache, invalidateCache } = require("../middleware/cache.middleware");
 
-// Cache invalidation after successful changes
-const invalidateSubscriptionCache = (req, res, next) => {
-    res.on("finish", async () => {
-        if (res.statusCode >= 200 && res.statusCode < 300) {
-            await clearCache("cache:/api/subscriptions*");
-        }
-    });
-
-    next();
-};
+// Cache invalidation before the response is sent
+const invalidateSubscriptionCache = invalidateCache(
+    "cache:/api/subscriptions*"
+);
 
 // GET all subscriptions
 router.get(
