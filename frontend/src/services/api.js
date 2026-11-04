@@ -35,7 +35,7 @@ export const setAuthHandlers = (next) => {
 export const refreshSession = () => {
     if (!refreshPromise) {
         refreshPromise = api
-            .post("/auth/refresh", null, { skipAuthRefresh: true })
+            .post("/auth/refresh", {}, { skipAuthRefresh: true })
             .then((response) => {
                 const { accessToken: token, user } = response.data.data;
                 setAccessToken(token);
